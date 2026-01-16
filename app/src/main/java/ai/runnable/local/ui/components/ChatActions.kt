@@ -3,9 +3,8 @@ package ai.runnable.local.ui.components
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -29,14 +28,23 @@ fun ChatActions(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        // Primary action button with proper contrast
         Button(
             onClick = {
                 clipboardManager.setText(AnnotatedString(textToShare))
             },
-            enabled = textToShare.isNotBlank()
+            enabled = textToShare.isNotBlank(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         ) {
             Text("Copy")
         }
+
+        // Secondary action with outline
         OutlinedButton(
             onClick = {
                 if (textToShare.isNotBlank()) {
@@ -47,12 +55,22 @@ fun ChatActions(
                     context.startActivity(Intent.createChooser(shareIntent, "Share output"))
                 }
             },
-            enabled = textToShare.isNotBlank()
+            enabled = textToShare.isNotBlank(),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.primary,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            )
         ) {
             Text("Share")
         }
-        Spacer(modifier = Modifier.width(2.dp))
-        OutlinedButton(onClick = onClear) {
+
+        // Destructive action with muted styling
+        OutlinedButton(
+            onClick = onClear,
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+            )
+        ) {
             Text("Clear")
         }
     }

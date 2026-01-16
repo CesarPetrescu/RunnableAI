@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,15 +18,25 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ChatMessageBubble(message: ChatMessage) {
     val isUser = message.role == ChatRole.USER
-    val background = when (message.role) {
-        ChatRole.USER -> MaterialTheme.colorScheme.primary
-        ChatRole.ASSISTANT -> MaterialTheme.colorScheme.surfaceVariant
-        ChatRole.SYSTEM -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-    }
-    val contentColor = when (message.role) {
-        ChatRole.USER -> MaterialTheme.colorScheme.onPrimary
-        ChatRole.ASSISTANT -> MaterialTheme.colorScheme.onSurface
-        ChatRole.SYSTEM -> MaterialTheme.colorScheme.error
+    val colorScheme = MaterialTheme.colorScheme
+
+    // Use proper theme colors with good contrast
+    val (background, contentColor, labelColor) = when (message.role) {
+        ChatRole.USER -> Triple(
+            colorScheme.primary,
+            colorScheme.onPrimary,
+            colorScheme.onPrimary.copy(alpha = 0.7f)
+        )
+        ChatRole.ASSISTANT -> Triple(
+            colorScheme.secondaryContainer,
+            colorScheme.onSecondaryContainer,
+            colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+        )
+        ChatRole.SYSTEM -> Triple(
+            colorScheme.errorContainer,
+            colorScheme.onErrorContainer,
+            colorScheme.onErrorContainer.copy(alpha = 0.7f)
+        )
     }
 
     Row(
@@ -34,15 +45,16 @@ fun ChatMessageBubble(message: ChatMessage) {
     ) {
         Surface(
             color = background,
-            shape = MaterialTheme.shapes.large
+            shape = MaterialTheme.shapes.large,
+            modifier = Modifier.widthIn(max = 320.dp)
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Text(
                     text = messageLabel(message.role),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = contentColor.copy(alpha = 0.7f)
+                    style = MaterialTheme.typography.labelMedium,
+                    color = labelColor
                 )
                 Text(
                     text = message.text,

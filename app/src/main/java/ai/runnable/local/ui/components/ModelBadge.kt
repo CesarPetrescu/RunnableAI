@@ -2,14 +2,7 @@ package ai.runnable.local.ui.components
 
 import ai.runnable.local.data.ModelTask
 import ai.runnable.local.data.RuntimeType
-import ai.runnable.local.ui.theme.Cobalt100
-import ai.runnable.local.ui.theme.Cobalt500
-import ai.runnable.local.ui.theme.Coral100
-import ai.runnable.local.ui.theme.Coral500
-import ai.runnable.local.ui.theme.Mint100
-import ai.runnable.local.ui.theme.Mint500
-import ai.runnable.local.ui.theme.Sun100
-import ai.runnable.local.ui.theme.Sun500
+import ai.runnable.local.ui.theme.RunnableTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -23,56 +16,85 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ModelBadge(task: ModelTask, runtime: RuntimeType) {
-    Row {
-        Badge(text = task.name, background = taskBackground(task), content = taskForeground(task))
+fun ModelBadge(
+    task: ModelTask,
+    runtime: RuntimeType,
+    modifier: Modifier = Modifier
+) {
+    val colors = RunnableTheme.colors
+    
+    Row(modifier = modifier) {
+        Badge(
+            text = task.name,
+            background = taskBackground(task, colors),
+            foreground = taskForeground(task, colors)
+        )
         Spacer(modifier = Modifier.width(8.dp))
-        Badge(text = runtime.name, background = runtimeBackground(runtime), content = runtimeForeground(runtime))
+        Badge(
+            text = runtimeLabel(runtime),
+            background = runtimeBackground(runtime, colors),
+            foreground = runtimeForeground(runtime, colors)
+        )
     }
 }
 
 @Composable
-private fun Badge(text: String, background: Color, content: Color) {
-    Surface(color = background, shape = MaterialTheme.shapes.small) {
+private fun Badge(
+    text: String,
+    background: Color,
+    foreground: Color
+) {
+    Surface(
+        color = background,
+        shape = MaterialTheme.shapes.small
+    ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge,
-            color = content,
+            style = MaterialTheme.typography.labelMedium,
+            color = foreground,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
         )
     }
 }
 
-private fun runtimeBackground(runtime: RuntimeType): Color {
+private fun runtimeLabel(runtime: RuntimeType): String {
     return when (runtime) {
-        RuntimeType.LLAMA_CPP -> Cobalt100
-        RuntimeType.ONNX -> Mint100
-        RuntimeType.EXECUTORCH -> Coral100
+        RuntimeType.LLAMA_CPP -> "llama.cpp"
+        RuntimeType.ONNX -> "ONNX"
+        RuntimeType.EXECUTORCH -> "ExecuTorch"
     }
 }
 
-private fun runtimeForeground(runtime: RuntimeType): Color {
+private fun taskBackground(task: ModelTask, colors: ai.runnable.local.ui.theme.RunnableColors): Color {
+    return when (task) {
+        ModelTask.CHAT -> colors.chatBadgeBg
+        ModelTask.ASR -> colors.asrBadgeBg
+        ModelTask.TTS -> colors.ttsBadgeBg
+        ModelTask.CODEC -> colors.codecBadgeBg
+    }
+}
+
+private fun taskForeground(task: ModelTask, colors: ai.runnable.local.ui.theme.RunnableColors): Color {
+    return when (task) {
+        ModelTask.CHAT -> colors.chatBadgeFg
+        ModelTask.ASR -> colors.asrBadgeFg
+        ModelTask.TTS -> colors.ttsBadgeFg
+        ModelTask.CODEC -> colors.codecBadgeFg
+    }
+}
+
+private fun runtimeBackground(runtime: RuntimeType, colors: ai.runnable.local.ui.theme.RunnableColors): Color {
     return when (runtime) {
-        RuntimeType.LLAMA_CPP -> Cobalt500
-        RuntimeType.ONNX -> Mint500
-        RuntimeType.EXECUTORCH -> Coral500
+        RuntimeType.LLAMA_CPP -> colors.llamaBadgeBg
+        RuntimeType.ONNX -> colors.onnxBadgeBg
+        RuntimeType.EXECUTORCH -> colors.execuTorchBadgeBg
     }
 }
 
-private fun taskBackground(task: ModelTask): Color {
-    return when (task) {
-        ModelTask.CHAT -> Cobalt100
-        ModelTask.ASR -> Mint100
-        ModelTask.TTS -> Sun100
-        ModelTask.CODEC -> Coral100
-    }
-}
-
-private fun taskForeground(task: ModelTask): Color {
-    return when (task) {
-        ModelTask.CHAT -> Cobalt500
-        ModelTask.ASR -> Mint500
-        ModelTask.TTS -> Sun500
-        ModelTask.CODEC -> Coral500
+private fun runtimeForeground(runtime: RuntimeType, colors: ai.runnable.local.ui.theme.RunnableColors): Color {
+    return when (runtime) {
+        RuntimeType.LLAMA_CPP -> colors.llamaBadgeFg
+        RuntimeType.ONNX -> colors.onnxBadgeFg
+        RuntimeType.EXECUTORCH -> colors.execuTorchBadgeFg
     }
 }

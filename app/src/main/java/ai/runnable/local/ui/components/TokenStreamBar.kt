@@ -1,5 +1,6 @@
 package ai.runnable.local.ui.components
 
+import ai.runnable.local.ui.theme.RunnableTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -14,6 +15,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun TokenStreamBar(text: String, modifier: Modifier = Modifier) {
+    val colors = RunnableTheme.colors
     val tokens = text.split(" ")
         .filter { it.isNotBlank() }
         .take(24)
@@ -27,13 +29,13 @@ fun TokenStreamBar(text: String, modifier: Modifier = Modifier) {
     ) {
         items(tokens) { token ->
             Surface(
-                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                color = colors.chipBg,
                 shape = MaterialTheme.shapes.small
             ) {
                 Text(
                     text = token,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.chipFg,
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }

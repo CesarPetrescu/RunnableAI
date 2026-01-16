@@ -2,7 +2,9 @@ package ai.runnable.local.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -19,17 +21,20 @@ fun HeroPanel(
     subtitle: String,
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    
+    // Subtle gradient using theme colors with transparency
     val gradient = Brush.linearGradient(
         colors = listOf(
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-            MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f),
+            colorScheme.primaryContainer.copy(alpha = 0.4f),
+            colorScheme.tertiaryContainer.copy(alpha = 0.25f),
             Color.Transparent
         )
     )
 
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
+        color = colorScheme.surface,
+        tonalElevation = 4.dp,
         shape = MaterialTheme.shapes.extraLarge,
         modifier = modifier
     ) {
@@ -41,12 +46,14 @@ fun HeroPanel(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.displayLarge
+                style = MaterialTheme.typography.headlineMedium,
+                color = colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = colorScheme.onSurfaceVariant
             )
         }
     }

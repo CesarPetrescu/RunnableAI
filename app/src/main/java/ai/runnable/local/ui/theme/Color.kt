@@ -2,23 +2,42 @@ package ai.runnable.local.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Ink900 = Color(0xFF141414)
-val Ink700 = Color(0xFF2C2C2C)
-val Ink500 = Color(0xFF4A4A4A)
-val Clay50 = Color(0xFFF7F2EA)
-val Clay100 = Color(0xFFEDE2D3)
-val Cloud50 = Color(0xFFF2F6FF)
-val Cloud100 = Color(0xFFE3ECFF)
+// ─────────────────────────────────────────────────────────────────────────────
+// Primary Palette: Lemon Glow + Steel Gray
+// ─────────────────────────────────────────────────────────────────────────────
 
-val Cobalt100 = Color(0xFFD7E3FF)
-val Cobalt500 = Color(0xFF1C4ED8)
-val Cobalt700 = Color(0xFF163FAE)
-val Sun100 = Color(0xFFFFE6C3)
-val Sun500 = Color(0xFFF4A942)
-val Sun700 = Color(0xFFE28B1A)
-val Mint100 = Color(0xFFD0F4E7)
-val Mint500 = Color(0xFF21B58B)
-val Mint700 = Color(0xFF168062)
-val Coral100 = Color(0xFFFFD7CC)
-val Coral500 = Color(0xFFEF6B4D)
-val Coral700 = Color(0xFFC65139)
+// Lemon Glow (Primary accent)
+val Lemon = Color(0xFFFEEF4C)
+val LemonLight = Color(0xFFFFF9A8)
+val LemonDark = Color(0xFFE5D644)
+val LemonMuted = Color(0xFFFEF9C3)
+
+// Steel Gray (Base)
+val Steel = Color(0xFF2A323F)
+val SteelLight = Color(0xFF3D4654)
+val SteelLighter = Color(0xFF4F5969)
+val SteelDark = Color(0xFF1E252F)
+val SteelDarker = Color(0xFF151A22)
+
+// Neutrals derived from Steel
+val SteelSurface = Color(0xFF343D4C)
+val SteelSurfaceLight = Color(0xFF424C5C)
+val SteelMuted = Color(0xFF6B7687)
+val SteelSubtle = Color(0xFF9AA3B0)
+
+// Light mode surfaces
+val LightBg = Color(0xFFF8F9FA)
+val LightSurface = Color(0xFFFFFFFF)
+val LightSurfaceAlt = Color(0xFFF1F3F5)
+
+// Text colors
+val TextOnLemon = Color(0xFF1E252F)
+val TextOnSteel = Color(0xFFF8F9FA)
+val TextMutedLight = Color(0xFF6B7687)
+val TextMutedDark = Color(0xFF9AA3B0)
+
+// Status colors (derived from base palette)
+val Success = Color(0xFF4ADE80)
+val SuccessDark = Color(0xFF22C55E)
+val Error = Color(0xFFF87171)
+val ErrorDark = Color(0xFFEF4444)

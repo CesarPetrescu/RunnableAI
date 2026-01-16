@@ -11,6 +11,7 @@ import ai.runnable.local.ui.components.SectionHeader
 import ai.runnable.local.ui.components.TokenStreamBar
 import ai.runnable.local.ui.components.WindowWidthClass
 import ai.runnable.local.ui.components.rememberWindowInfo
+import ai.runnable.local.ui.theme.RunnableTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -303,16 +304,18 @@ private fun OutputCard(
 
 @Composable
 private fun QuickPromptChip(text: String, onClick: () -> Unit) {
+    val colors = RunnableTheme.colors
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.18f)
+        color = colors.chipBg
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = colors.chipFg,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
         )
     }
 }
+
