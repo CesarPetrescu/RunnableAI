@@ -1,5 +1,6 @@
 package ai.runnable.local.ui.screens
 
+import ai.runnable.local.HfSearchState
 import ai.runnable.local.MainViewModel
 import ai.runnable.local.data.ModelRecord
 import ai.runnable.local.data.ModelStatus
@@ -33,6 +34,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,6 +46,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -52,6 +56,8 @@ fun ModelsScreen(viewModel: MainViewModel) {
     val catalog by viewModel.catalog.collectAsStateWithLifecycle()
     val statuses by viewModel.statuses.collectAsStateWithLifecycle()
     val catalogError by viewModel.catalogError.collectAsStateWithLifecycle()
+    val hfToken by viewModel.hfToken.collectAsStateWithLifecycle()
+    val hfSearch by viewModel.hfSearch.collectAsStateWithLifecycle()
 
     val total = catalog.size
     val ready = statuses.values.count { it is ModelStatus.Ready }
@@ -95,6 +101,13 @@ fun ModelsScreen(viewModel: MainViewModel) {
                 onRefresh = { viewModel.refreshCatalog() },
                 onDownload = { viewModel.downloadModel(it) },
                 onRemove = { viewModel.removeModel(it) },
+                hfToken = hfToken,
+                hfSearch = hfSearch,
+                onHfTokenChange = { viewModel.updateHfToken(it) },
+                onHfQueryChange = { viewModel.updateHfQuery(it) },
+                onHfSearch = { viewModel.searchHfGguf() },
+                onHfLoadFiles = { viewModel.loadHfFiles(it) },
+                onHfDownload = { repoId, filename -> viewModel.downloadHfGguf(repoId, filename) },
                 onSelect = {
                     selectedId = it
                     showDetail = true
@@ -154,6 +167,13 @@ fun ModelsScreen(viewModel: MainViewModel) {
                 onRefresh = { viewModel.refreshCatalog() },
                 onDownload = { viewModel.downloadModel(it) },
                 onRemove = { viewModel.removeModel(it) },
+                hfToken = hfToken,
+                hfSearch = hfSearch,
+                onHfTokenChange = { viewModel.updateHfToken(it) },
+                onHfQueryChange = { viewModel.updateHfQuery(it) },
+                onHfSearch = { viewModel.searchHfGguf() },
+                onHfLoadFiles = { viewModel.loadHfFiles(it) },
+                onHfDownload = { repoId, filename -> viewModel.downloadHfGguf(repoId, filename) },
                 onSelect = {
                     selectedId = it
                     showDetail = true
@@ -177,6 +197,13 @@ private fun ModelsList(
     onRefresh: () -> Unit,
     onDownload: (String) -> Unit,
     onRemove: (String) -> Unit,
+    hfToken: String,
+    hfSearch: HfSearchState,
+    onHfTokenChange: (String) -> Unit,
+    onHfQueryChange: (String) -> Unit,
+    onHfSearch: () -> Unit,
+    onHfLoadFiles: (String) -> Unit,
+    onHfDownload: (String, String) -> Unit,
     onSelect: (String) -> Unit,
     selectedId: String?,
     modifier: Modifier
@@ -217,6 +244,25 @@ private fun ModelsList(
                     onAction = onRefresh
                 )
             }
+        }
+
+        item {
+            SectionHeader(
+                title = "Hugging Face GGUF",
+                subtitle = "Search repos, then download GGUF files with your token."
+            )
+        }
+
+        item {
+            HuggingFacePanel(
+                token = hfToken,
+                search = hfSearch,
+                onTokenChange = onHfTokenChange,
+                onQueryChange = onHfQueryChange,
+                onSearch = onHfSearch,
+                onLoadFiles = onHfLoadFiles,
+                onDownload = onHfDownload
+            )
         }
 
         item {
@@ -360,6 +406,132 @@ private fun DownloadProgress(progress: Float) {
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.primary)
         )
+    }
+}
+
+@Composable
+private fun HuggingFacePanel(
+    token: String,
+    search: HfSearchState,
+    onTokenChange: (String) -> Unit,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onLoadFiles: (String) -> Unit,
+    onDownload: (String, String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.extraLarge)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedTextField(
+            value = token,
+            onValueChange = onTokenChange,
+            label = { Text("Hugging Face token") },
+            placeholder = { Text("hf_...") },
+            visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = search.query,
+            onValueChange = onQueryChange,
+            label = { Text("Search GGUF repos") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Button(onClick = onSearch, enabled = !search.isSearching) {
+                Text(if (search.isSearching) "Searching..." else "Search")
+            }
+            if (search.error != null) {
+                Text(
+                    text = search.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 10.dp)
+                )
+            }
+        }
+
+        if (search.results.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                search.results.forEach { result ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        shape = MaterialTheme.shapes.large
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = result.repoId,
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            if (result.downloads != null || result.likes != null) {
+                                val meta = buildString {
+                                    result.downloads?.let { append("Downloads: $it") }
+                                    if (isNotEmpty() && result.likes != null) append(" • ")
+                                    result.likes?.let { append("Likes: $it") }
+                                }
+                                Text(
+                                    text = meta,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            when {
+                                result.filesLoading -> Text("Loading GGUF files…")
+                                result.filesError != null -> {
+                                    Text(
+                                        text = result.filesError,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                    OutlinedButton(onClick = { onLoadFiles(result.repoId) }) {
+                                        Text("Retry files")
+                                    }
+                                }
+                                result.files.isEmpty() -> {
+                                    OutlinedButton(onClick = { onLoadFiles(result.repoId) }) {
+                                        Text("Load GGUF files")
+                                    }
+                                }
+                                else -> {
+                                    result.files.forEach { file ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Text(
+                                                text = file,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Button(onClick = { onDownload(result.repoId, file) }) {
+                                                Text("Download")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

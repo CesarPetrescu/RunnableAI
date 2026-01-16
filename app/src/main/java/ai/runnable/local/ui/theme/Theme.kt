@@ -10,63 +10,63 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Light Color Scheme
+// Light Color Scheme - Steel primary, dark text on light backgrounds
 // ─────────────────────────────────────────────────────────────────────────────
 private val LightColors = lightColorScheme(
     primary = Steel,
-    onPrimary = TextOnSteel,
+    onPrimary = TextLight,
     primaryContainer = SteelLight,
-    onPrimaryContainer = TextOnSteel,
-    secondary = Lemon,
-    onSecondary = TextOnLemon,
+    onPrimaryContainer = TextLight,
+    secondary = Steel,
+    onSecondary = TextLight,
     secondaryContainer = LemonMuted,
-    onSecondaryContainer = TextOnLemon,
+    onSecondaryContainer = TextDark,
     tertiary = Lemon,
-    onTertiary = TextOnLemon,
+    onTertiary = TextDark,
     tertiaryContainer = LemonLight,
-    onTertiaryContainer = TextOnLemon,
+    onTertiaryContainer = TextDark,
     background = LightBg,
-    onBackground = Steel,
+    onBackground = TextDark,
     surface = LightSurface,
-    onSurface = Steel,
+    onSurface = TextDark,
     surfaceVariant = LightSurfaceAlt,
-    onSurfaceVariant = SteelLighter,
+    onSurfaceVariant = TextDarkMuted,
     surfaceContainerHighest = LightSurfaceAlt,
     error = Error,
-    onError = Color.White,
+    onError = TextLight,
     errorContainer = Color(0xFFFFE5E5),
-    onErrorContainer = ErrorDark,
+    onErrorContainer = Color(0xFFB91C1C),
     outline = SteelMuted,
     outlineVariant = SteelSubtle
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dark Color Scheme
+// Dark Color Scheme - Lemon accent, light text on dark backgrounds
 // ─────────────────────────────────────────────────────────────────────────────
 private val DarkColors = darkColorScheme(
     primary = Lemon,
-    onPrimary = TextOnLemon,
+    onPrimary = TextDark,
     primaryContainer = LemonDark,
-    onPrimaryContainer = TextOnLemon,
+    onPrimaryContainer = TextDark,
     secondary = Lemon,
-    onSecondary = TextOnLemon,
+    onSecondary = TextDark,
     secondaryContainer = SteelLight,
-    onSecondaryContainer = TextOnSteel,
+    onSecondaryContainer = TextLight,
     tertiary = LemonLight,
-    onTertiary = TextOnLemon,
+    onTertiary = TextDark,
     tertiaryContainer = SteelLight,
     onTertiaryContainer = Lemon,
     background = SteelDarker,
-    onBackground = TextOnSteel,
+    onBackground = TextLight,
     surface = Steel,
-    onSurface = TextOnSteel,
+    onSurface = TextLight,
     surfaceVariant = SteelLight,
-    onSurfaceVariant = TextMutedDark,
+    onSurfaceVariant = TextLightMuted,
     surfaceContainerHighest = SteelSurface,
-    error = Error,
-    onError = SteelDarker,
+    error = ErrorLight,
+    onError = TextDark,
     errorContainer = Color(0xFF5C1F1F),
-    onErrorContainer = Error,
+    onErrorContainer = ErrorLight,
     outline = SteelMuted,
     outlineVariant = SteelLighter
 )
@@ -91,12 +91,12 @@ private val LightRunnableColors = RunnableColors(
     isDark = false,
     accent = Lemon,
     accentMuted = LemonMuted,
-    onAccent = TextOnLemon,
+    onAccent = TextDark,
     chipBg = LemonMuted,
-    chipFg = Steel,
+    chipFg = TextDark,
     badgeBg = Steel,
-    badgeFg = TextOnSteel,
-    success = SuccessDark,
+    badgeFg = TextLight,
+    success = Success,
     successBg = Color(0xFFDCFCE7)
 )
 
@@ -104,12 +104,12 @@ private val DarkRunnableColors = RunnableColors(
     isDark = true,
     accent = Lemon,
     accentMuted = LemonDark,
-    onAccent = TextOnLemon,
+    onAccent = TextDark,
     chipBg = SteelSurface,
-    chipFg = Lemon,
+    chipFg = TextLight,
     badgeBg = Lemon,
-    badgeFg = TextOnLemon,
-    success = Success,
+    badgeFg = TextDark,
+    success = SuccessLight,
     successBg = Color(0xFF1A3D2A)
 )
 
