@@ -49,6 +49,12 @@ class ModelManager(
         enqueueDownload(model)
     }
 
+    fun addCustomModelAndDownload(model: ModelRecord) {
+        catalogRepository.addCustomModel(model)
+        upsertCatalogModel(model)
+        enqueueDownload(model)
+    }
+
     private fun downloadDependencies(model: ModelRecord) {
         model.dependsOn.forEach { dependencyId ->
             val dep = _catalog.value.firstOrNull { it.id == dependencyId } ?: return@forEach
@@ -143,4 +149,12 @@ class ModelManager(
 
     private fun downloadTag(modelId: String) = "download-$modelId"
     private fun downloadWorkName(modelId: String) = "download-$modelId"
+
+    private fun upsertCatalogModel(model: ModelRecord) {
+        _catalog.update { current ->
+            val filtered = current.filterNot { it.id == model.id }
+            filtered + model
+        }
+        _statuses.update { it + (model.id to resolveStatus(model)) }
+    }
 }

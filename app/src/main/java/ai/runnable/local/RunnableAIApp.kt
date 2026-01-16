@@ -5,6 +5,8 @@ import ai.runnable.local.backends.BackendRegistry
 import ai.runnable.local.backends.executorch.ExecuTorchBackend
 import ai.runnable.local.backends.llama.LlamaBackend
 import ai.runnable.local.backends.onnx.OnnxBackend
+import ai.runnable.local.data.AppSettings
+import ai.runnable.local.data.HuggingFaceRepository
 import ai.runnable.local.data.ModelCatalogRepository
 import ai.runnable.local.data.ModelManager
 import ai.runnable.local.data.ModelStore
@@ -40,6 +42,9 @@ class RunnableAIApp : Application(), Configuration.Provider {
 
 class AppContainer(private val app: Application) {
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    val settings = AppSettings(app)
+    val huggingFace = HuggingFaceRepository()
 
     private val modelStore = ModelStore(app)
     private val catalogRepository = ModelCatalogRepository(app)

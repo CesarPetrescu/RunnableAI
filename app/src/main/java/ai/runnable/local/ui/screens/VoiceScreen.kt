@@ -7,6 +7,7 @@ import ai.runnable.local.ui.components.ModelPicker
 import ai.runnable.local.ui.components.SectionHeader
 import ai.runnable.local.ui.components.WindowWidthClass
 import ai.runnable.local.ui.components.rememberWindowInfo
+import ai.runnable.local.ui.theme.RunnableTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,12 +24,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -43,12 +46,22 @@ fun VoiceScreen(viewModel: MainViewModel) {
     val voice by viewModel.voice.collectAsStateWithLifecycle()
 
     val ttsModels = catalog.filter { it.task == ModelTask.TTS }
-    var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
-    var text by rememberSaveable { mutableStateOf("Welcome to RunnableAI — your local voice studio.") }
+    val asrModels = catalog.filter { it.task == ModelTask.ASR }
+
+    var selectedTtsId by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedAsrId by rememberSaveable { mutableStateOf<String?>(null) }
+    var ttsText by rememberSaveable { mutableStateOf("Welcome to RunnableAI — your local voice studio.") }
+    var activeTab by rememberSaveable { mutableIntStateOf(0) } // 0 = TTS, 1 = STT
 
     LaunchedEffect(ttsModels) {
-        if (selectedId == null && ttsModels.isNotEmpty()) {
-            selectedId = ttsModels.first().id
+        if (selectedTtsId == null && ttsModels.isNotEmpty()) {
+            selectedTtsId = ttsModels.first().id
+        }
+    }
+
+    LaunchedEffect(asrModels) {
+        if (selectedAsrId == null && asrModels.isNotEmpty()) {
+            selectedAsrId = asrModels.first().id
         }
     }
 
@@ -66,34 +79,64 @@ fun VoiceScreen(viewModel: MainViewModel) {
                 Spacer(modifier = Modifier.height(8.dp))
                 HeroPanel(
                     title = "Voice Lab",
-                    subtitle = "Generate speech locally with ExecuTorch or GGUF backbones."
+                    subtitle = "Text-to-Speech and Speech-to-Text on-device."
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                VoiceModelCard(
-                    models = ttsModels,
-                    statuses = statuses,
-                    selectedId = selectedId,
-                    onSelect = { selectedId = it }
+                VoiceTabSelector(
+                    selectedTab = activeTab,
+                    onTabSelect = { activeTab = it }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                VoicePromptCard(
-                    text = text,
-                    onTextChange = { text = it },
-                    styles = styles,
-                    onSpeak = {
-                        val id = selectedId ?: return@VoicePromptCard
-                        viewModel.synthesize(id, text)
-                    },
-                    isRunning = voice.isRunning,
-                    canRun = selectedId != null
-                )
+
+                if (activeTab == 0) {
+                    // TTS Section
+                    TtsModelCard(
+                        models = ttsModels,
+                        statuses = statuses,
+                        selectedId = selectedTtsId,
+                        onSelect = { selectedTtsId = it }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TtsPromptCard(
+                        text = ttsText,
+                        onTextChange = { ttsText = it },
+                        styles = styles,
+                        onSpeak = {
+                            val id = selectedTtsId ?: return@TtsPromptCard
+                            viewModel.synthesize(id, ttsText)
+                        },
+                        isRunning = voice.isRunning,
+                        canRun = selectedTtsId != null
+                    )
+                } else {
+                    // STT Section
+                    SttModelCard(
+                        models = asrModels,
+                        statuses = statuses,
+                        selectedId = selectedAsrId,
+                        onSelect = { selectedAsrId = it }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    SttRecordCard(
+                        isRecording = false,
+                        onStartRecording = { /* TODO: Implement recording */ },
+                        onStopRecording = { /* TODO: Implement recording */ }
+                    )
+                }
             }
             Column(modifier = Modifier.weight(0.45f)) {
                 Spacer(modifier = Modifier.height(8.dp))
-                PlaybackCard(
-                    lastSampleCount = voice.lastSampleCount,
-                    error = voice.error
-                )
+                if (activeTab == 0) {
+                    PlaybackCard(
+                        lastSampleCount = voice.lastSampleCount,
+                        error = voice.error
+                    )
+                } else {
+                    TranscriptCard(
+                        transcript = "",
+                        error = null
+                    )
+                }
             }
         }
     } else {
@@ -105,38 +148,73 @@ fun VoiceScreen(viewModel: MainViewModel) {
                 Spacer(modifier = Modifier.height(8.dp))
                 HeroPanel(
                     title = "Voice Lab",
-                    subtitle = "Generate speech locally with ExecuTorch or GGUF backbones."
+                    subtitle = "Text-to-Speech and Speech-to-Text on-device."
                 )
             }
 
             item {
-                VoiceModelCard(
-                    models = ttsModels,
-                    statuses = statuses,
-                    selectedId = selectedId,
-                    onSelect = { selectedId = it }
+                VoiceTabSelector(
+                    selectedTab = activeTab,
+                    onTabSelect = { activeTab = it }
                 )
             }
 
-            item {
-                VoicePromptCard(
-                    text = text,
-                    onTextChange = { text = it },
-                    styles = styles,
-                    onSpeak = {
-                        val id = selectedId ?: return@VoicePromptCard
-                        viewModel.synthesize(id, text)
-                    },
-                    isRunning = voice.isRunning,
-                    canRun = selectedId != null
-                )
-            }
+            if (activeTab == 0) {
+                // TTS Section
+                item {
+                    TtsModelCard(
+                        models = ttsModels,
+                        statuses = statuses,
+                        selectedId = selectedTtsId,
+                        onSelect = { selectedTtsId = it }
+                    )
+                }
 
-            item {
-                PlaybackCard(
-                    lastSampleCount = voice.lastSampleCount,
-                    error = voice.error
-                )
+                item {
+                    TtsPromptCard(
+                        text = ttsText,
+                        onTextChange = { ttsText = it },
+                        styles = styles,
+                        onSpeak = {
+                            val id = selectedTtsId ?: return@TtsPromptCard
+                            viewModel.synthesize(id, ttsText)
+                        },
+                        isRunning = voice.isRunning,
+                        canRun = selectedTtsId != null
+                    )
+                }
+
+                item {
+                    PlaybackCard(
+                        lastSampleCount = voice.lastSampleCount,
+                        error = voice.error
+                    )
+                }
+            } else {
+                // STT Section
+                item {
+                    SttModelCard(
+                        models = asrModels,
+                        statuses = statuses,
+                        selectedId = selectedAsrId,
+                        onSelect = { selectedAsrId = it }
+                    )
+                }
+
+                item {
+                    SttRecordCard(
+                        isRecording = false,
+                        onStartRecording = { /* TODO: Implement recording */ },
+                        onStopRecording = { /* TODO: Implement recording */ }
+                    )
+                }
+
+                item {
+                    TranscriptCard(
+                        transcript = "",
+                        error = null
+                    )
+                }
             }
 
             item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -145,14 +223,48 @@ fun VoiceScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-private fun VoiceModelCard(
+private fun VoiceTabSelector(
+    selectedTab: Int,
+    onTabSelect: (Int) -> Unit
+) {
+    val colors = RunnableTheme.colors
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Surface(
+            onClick = { onTabSelect(0) },
+            color = if (selectedTab == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+            shape = MaterialTheme.shapes.large
+        ) {
+            Text(
+                text = "Text to Speech",
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selectedTab == 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+            )
+        }
+        Surface(
+            onClick = { onTabSelect(1) },
+            color = if (selectedTab == 1) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+            shape = MaterialTheme.shapes.large
+        ) {
+            Text(
+                text = "Speech to Text",
+                style = MaterialTheme.typography.labelLarge,
+                color = if (selectedTab == 1) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TtsModelCard(
     models: List<ai.runnable.local.data.ModelRecord>,
     statuses: Map<String, ai.runnable.local.data.ModelStatus>,
     selectedId: String?,
     onSelect: (String) -> Unit
 ) {
     SectionHeader(
-        title = "TTS model",
+        title = "TTS Model",
         subtitle = "Pick a voice model to synthesize speech."
     )
     Card(
@@ -174,7 +286,44 @@ private fun VoiceModelCard(
 }
 
 @Composable
-private fun VoicePromptCard(
+private fun SttModelCard(
+    models: List<ai.runnable.local.data.ModelRecord>,
+    statuses: Map<String, ai.runnable.local.data.ModelStatus>,
+    selectedId: String?,
+    onSelect: (String) -> Unit
+) {
+    SectionHeader(
+        title = "STT Model",
+        subtitle = "Pick an ASR model for transcription."
+    )
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = MaterialTheme.shapes.extraLarge
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            if (models.isEmpty()) {
+                Text(
+                    text = "No ASR models in catalog. Add ONNX ASR models to catalog.json.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                ModelPicker(
+                    label = "Select an ASR model",
+                    models = models,
+                    statuses = statuses,
+                    selectedId = selectedId,
+                    onSelect = onSelect,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TtsPromptCard(
     text: String,
     onTextChange: (String) -> Unit,
     styles: List<String>,
@@ -183,7 +332,7 @@ private fun VoicePromptCard(
     canRun: Boolean
 ) {
     SectionHeader(
-        title = "Voice prompt",
+        title = "Voice Prompt",
         subtitle = "Shorter text yields faster synthesis."
     )
     Card(
@@ -208,12 +357,50 @@ private fun VoicePromptCard(
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onSpeak,
+                enabled = !isRunning && canRun
+            ) {
+                Text(if (isRunning) "Speaking..." else "Speak")
+            }
+        }
+    }
+}
+
+@Composable
+private fun SttRecordCard(
+    isRecording: Boolean,
+    onStartRecording: () -> Unit,
+    onStopRecording: () -> Unit
+) {
+    SectionHeader(
+        title = "Record Audio",
+        subtitle = "Tap to start recording, transcription runs locally."
+    )
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = MaterialTheme.shapes.extraLarge
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Text(
+                text = if (isRecording) "Recording..." else "Tap the button to start recording audio for transcription.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(
-                    onClick = onSpeak,
-                    enabled = !isRunning && canRun
-                ) {
-                    Text(if (isRunning) "Speaking..." else "Speak")
+                if (isRecording) {
+                    Button(onClick = onStopRecording) {
+                        Text("Stop Recording")
+                    }
+                } else {
+                    Button(onClick = onStartRecording) {
+                        Text("Start Recording")
+                    }
+                }
+                OutlinedButton(onClick = { /* TODO: file picker */ }) {
+                    Text("Upload Audio")
                 }
             }
         }
@@ -236,7 +423,7 @@ private fun PlaybackCard(
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             val message = error ?: when {
-                lastSampleCount > 0 -> "Played ${lastSampleCount} samples"
+                lastSampleCount > 0 -> "Played $lastSampleCount samples"
                 else -> "No audio output yet."
             }
             Text(
@@ -249,15 +436,41 @@ private fun PlaybackCard(
 }
 
 @Composable
+private fun TranscriptCard(
+    transcript: String,
+    error: String?
+) {
+    SectionHeader(
+        title = "Transcript",
+        subtitle = "Speech recognition output appears here."
+    )
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+        shape = MaterialTheme.shapes.extraLarge
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            val message = error ?: transcript.ifBlank { "Record or upload audio to see the transcript." }
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
 private fun StyleChip(text: String) {
+    val colors = RunnableTheme.colors
     Surface(
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+        color = colors.chipBg
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = colors.chipFg,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
         )
     }

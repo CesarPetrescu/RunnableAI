@@ -22,7 +22,11 @@ class ModelDownloadWorker(
             ?: return Result.failure(Data.Builder().putString(KEY_ERROR, "Unknown model").build())
 
         val store = ModelStore(applicationContext)
-        val downloader = ModelDownloadManager(store)
+        val settings = AppSettings(applicationContext)
+        val downloader = ModelDownloadManager(
+            store = store,
+            authConfig = DownloadAuthConfig(huggingFaceToken = settings.huggingFaceToken)
+        )
 
         val result = downloader.downloadModel(model) { downloaded, total ->
             val progress = Data.Builder()
