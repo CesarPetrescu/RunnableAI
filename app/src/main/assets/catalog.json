@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "id": "llm-llama3-8b-q4",
+      "name": "Llama 3 8B Instruct Q4",
+      "task": "CHAT",
+      "runtime": "LLAMA_CPP",
+      "artifacts": [
+        {
+          "name": "model.gguf",
+          "url": "https://huggingface.co/TheBloke/Llama-3.1-8B-Instruct-GGUF/resolve/main/llama-3.1-8b-instruct.Q4_K_M.gguf",
+          "sha256": "",
+          "bytes": 0
+        }
+      ],
+      "requirements": {
+        "min_ram_mb": 6000,
+        "preferred_abi": "arm64-v8a"
+      },
+      "notes": ["Replace with a smaller 1-4B model for typical phones."]
+    },
+    {
+      "id": "neutts-nano-q4-backbone",
+      "name": "NeuTTS Nano Q4 Backbone",
+      "task": "TTS",
+      "runtime": "LLAMA_CPP",
+      "artifacts": [
+        {
+          "name": "model.gguf",
+          "url": "https://huggingface.co/neuphonic/neutts-nano-q4-gguf/resolve/main/model.gguf",
+          "sha256": "",
+          "bytes": 0
+        }
+      ],
+      "depends_on": ["neucodec-decoder-int8"],
+      "notes": ["Backbone only; requires ONNX codec decoder."]
+    },
+    {
+      "id": "neucodec-decoder-int8",
+      "name": "NeuCodec ONNX Decoder INT8",
+      "task": "CODEC",
+      "runtime": "ONNX",
+      "artifacts": [
+        {
+          "name": "model.onnx",
+          "url": "https://huggingface.co/neuphonic/neucodec-onnx-decoder-int8/resolve/main/model.onnx",
+          "sha256": "",
+          "bytes": 0
+        }
+      ]
+    },
+    {
+      "id": "parakeet-tdt-0.6b-v2-onnx",
+      "name": "Parakeet TDT 0.6B v2 (ONNX)",
+      "task": "ASR",
+      "runtime": "ONNX",
+      "artifacts": [
+        {
+          "name": "encoder-model.int8.onnx",
+          "url": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v2-onnx/resolve/main/encoder-model.int8.onnx",
+          "sha256": "",
+          "bytes": 0
+        },
+        {
+          "name": "decoder_joint-model.int8.onnx",
+          "url": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v2-onnx/resolve/main/decoder_joint-model.int8.onnx",
+          "sha256": "",
+          "bytes": 0
+        },
+        {
+          "name": "vocab.txt",
+          "url": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v2-onnx/resolve/main/vocab.txt",
+          "sha256": "",
+          "bytes": 0
+        }
+      ],
+      "requirements": {
+        "min_ram_mb": 6000,
+        "preferred_abi": "arm64-v8a"
+      },
+      "notes": ["Large; best on high-end devices."]
+    },
+    {
+      "id": "canary-1b-v2-onnx",
+      "name": "Canary 1B v2 (ONNX)",
+      "task": "ASR",
+      "runtime": "ONNX",
+      "artifacts": [
+        {
+          "name": "encoder-model.int8.onnx",
+          "url": "https://huggingface.co/istupakov/canary-1b-v2-onnx/resolve/main/encoder-model.int8.onnx",
+          "sha256": "",
+          "bytes": 0
+        },
+        {
+          "name": "decoder_joint-model.int8.onnx",
+          "url": "https://huggingface.co/istupakov/canary-1b-v2-onnx/resolve/main/decoder_joint-model.int8.onnx",
+          "sha256": "",
+          "bytes": 0
+        },
+        {
+          "name": "vocab.txt",
+          "url": "https://huggingface.co/istupakov/canary-1b-v2-onnx/resolve/main/vocab.txt",
+          "sha256": "",
+          "bytes": 0
+        }
+      ],
+      "requirements": {
+        "min_ram_mb": 10000,
+        "preferred_abi": "arm64-v8a"
+      },
+      "notes": ["Very large; optional high-end download."]
+    },
+    {
+      "id": "pocket-tts-executorch",
+      "name": "Pocket-TTS (ExecuTorch)",
+      "task": "TTS",
+      "runtime": "EXECUTORCH",
+      "artifacts": [
+        {
+          "name": "pocket_tts.pte",
+          "url": "https://example.com/pocket-tts.pte",
+          "sha256": "",
+          "bytes": 0
+        },
+        {
+          "name": "tokenizer.json",
+          "url": "https://example.com/tokenizer.json",
+          "sha256": "",
+          "bytes": 0
+        }
+      ],
+      "notes": ["Replace with exported .pte model and tokenizer."]
+    },
+    {
+      "id": "soprano-1.1-executorch",
+      "name": "Soprano 1.1 80M (ExecuTorch)",
+      "task": "TTS",
+      "runtime": "EXECUTORCH",
+      "artifacts": [
+        {
+          "name": "soprano-1.1.pte",
+          "url": "https://example.com/soprano-1.1.pte",
+          "sha256": "",
+          "bytes": 0
+        },
+        {
+          "name": "tokenizer.json",
+          "url": "https://example.com/tokenizer.json",
+          "sha256": "",
+          "bytes": 0
+        }
+      ],
+      "notes": ["Replace with exported .pte model and tokenizer."]
+    }
+  ]
+}
