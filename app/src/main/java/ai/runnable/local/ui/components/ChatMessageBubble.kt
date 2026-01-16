@@ -2,6 +2,7 @@ package ai.runnable.local.ui.components
 
 import ai.runnable.local.domain.ChatMessage
 import ai.runnable.local.domain.ChatRole
+import ai.runnable.local.ui.theme.RunnableTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,8 +20,8 @@ import androidx.compose.ui.unit.dp
 fun ChatMessageBubble(message: ChatMessage) {
     val isUser = message.role == ChatRole.USER
     val colorScheme = MaterialTheme.colorScheme
+    val colors = RunnableTheme.colors
 
-    // Use proper theme colors with good contrast
     val (background, contentColor, labelColor) = when (message.role) {
         ChatRole.USER -> Triple(
             colorScheme.primary,
@@ -28,9 +29,9 @@ fun ChatMessageBubble(message: ChatMessage) {
             colorScheme.onPrimary.copy(alpha = 0.7f)
         )
         ChatRole.ASSISTANT -> Triple(
-            colorScheme.secondaryContainer,
-            colorScheme.onSecondaryContainer,
-            colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+            colorScheme.surfaceVariant,
+            colorScheme.onSurface,
+            colorScheme.onSurfaceVariant
         )
         ChatRole.SYSTEM -> Triple(
             colorScheme.errorContainer,

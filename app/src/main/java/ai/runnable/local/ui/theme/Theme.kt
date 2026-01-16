@@ -13,156 +13,110 @@ import androidx.compose.ui.graphics.Color
 // Light Color Scheme
 // ─────────────────────────────────────────────────────────────────────────────
 private val LightColors = lightColorScheme(
-    // Primary: Main actions, buttons, links
-    primary = Cobalt500,
-    onPrimary = Color.White,
-    primaryContainer = Cobalt100,
-    onPrimaryContainer = Cobalt700,
-
-    // Secondary: Secondary actions, less prominent elements
-    secondary = Cobalt600,
-    onSecondary = Color.White,
-    secondaryContainer = Cobalt50,
-    onSecondaryContainer = Cobalt700,
-
-    // Tertiary: Accents, success states
-    tertiary = Emerald500,
-    onTertiary = Color.White,
-    tertiaryContainer = Emerald100,
-    onTertiaryContainer = Emerald700,
-
-    // Background & Surface
-    background = Clay50,
-    onBackground = Ink900,
-    surface = Color.White,
-    onSurface = Ink900,
-    surfaceVariant = Cloud100,
-    onSurfaceVariant = Ink500,
-    surfaceContainerHighest = Clay100,
-
-    // Error states
-    error = Coral500,
+    primary = Steel,
+    onPrimary = TextOnSteel,
+    primaryContainer = SteelLight,
+    onPrimaryContainer = TextOnSteel,
+    secondary = Lemon,
+    onSecondary = TextOnLemon,
+    secondaryContainer = LemonMuted,
+    onSecondaryContainer = TextOnLemon,
+    tertiary = Lemon,
+    onTertiary = TextOnLemon,
+    tertiaryContainer = LemonLight,
+    onTertiaryContainer = TextOnLemon,
+    background = LightBg,
+    onBackground = Steel,
+    surface = LightSurface,
+    onSurface = Steel,
+    surfaceVariant = LightSurfaceAlt,
+    onSurfaceVariant = SteelLighter,
+    surfaceContainerHighest = LightSurfaceAlt,
+    error = Error,
     onError = Color.White,
-    errorContainer = Coral100,
-    onErrorContainer = Coral700,
-
-    // Outline
-    outline = Ink300,
-    outlineVariant = Ink200
+    errorContainer = Color(0xFFFFE5E5),
+    onErrorContainer = ErrorDark,
+    outline = SteelMuted,
+    outlineVariant = SteelSubtle
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dark Color Scheme
 // ─────────────────────────────────────────────────────────────────────────────
 private val DarkColors = darkColorScheme(
-    // Primary: Main actions, buttons, links
-    primary = Cobalt400,
-    onPrimary = Ink900,
-    primaryContainer = Cobalt700,
-    onPrimaryContainer = Cobalt100,
-
-    // Secondary: Secondary actions
-    secondary = Cobalt400,
-    onSecondary = Ink900,
-    secondaryContainer = Cobalt700,
-    onSecondaryContainer = Cobalt200,
-
-    // Tertiary: Accents, success states
-    tertiary = Emerald400,
-    onTertiary = Ink900,
-    tertiaryContainer = Emerald700,
-    onTertiaryContainer = Emerald100,
-
-    // Background & Surface
-    background = Ink900,
-    onBackground = Ink100,
-    surface = Ink800,
-    onSurface = Ink100,
-    surfaceVariant = Ink700,
-    onSurfaceVariant = Ink300,
-    surfaceContainerHighest = Ink700,
-
-    // Error states
-    error = Coral400,
-    onError = Ink900,
-    errorContainer = Coral700,
-    onErrorContainer = Coral100,
-
-    // Outline
-    outline = Ink500,
-    outlineVariant = Ink600
+    primary = Lemon,
+    onPrimary = TextOnLemon,
+    primaryContainer = LemonDark,
+    onPrimaryContainer = TextOnLemon,
+    secondary = Lemon,
+    onSecondary = TextOnLemon,
+    secondaryContainer = SteelLight,
+    onSecondaryContainer = TextOnSteel,
+    tertiary = LemonLight,
+    onTertiary = TextOnLemon,
+    tertiaryContainer = SteelLight,
+    onTertiaryContainer = Lemon,
+    background = SteelDarker,
+    onBackground = TextOnSteel,
+    surface = Steel,
+    onSurface = TextOnSteel,
+    surfaceVariant = SteelLight,
+    onSurfaceVariant = TextMutedDark,
+    surfaceContainerHighest = SteelSurface,
+    error = Error,
+    onError = SteelDarker,
+    errorContainer = Color(0xFF5C1F1F),
+    onErrorContainer = Error,
+    outline = SteelMuted,
+    outlineVariant = SteelLighter
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Extended Colors (for badges and semantic UI)
+// Extended Colors
 // ─────────────────────────────────────────────────────────────────────────────
 data class RunnableColors(
     val isDark: Boolean,
-    // Task badge colors
-    val chatBadgeBg: Color,
-    val chatBadgeFg: Color,
-    val asrBadgeBg: Color,
-    val asrBadgeFg: Color,
-    val ttsBadgeBg: Color,
-    val ttsBadgeFg: Color,
-    val codecBadgeBg: Color,
-    val codecBadgeFg: Color,
-    // Runtime badge colors
-    val llamaBadgeBg: Color,
-    val llamaBadgeFg: Color,
-    val onnxBadgeBg: Color,
-    val onnxBadgeFg: Color,
-    val execuTorchBadgeBg: Color,
-    val execuTorchBadgeFg: Color,
-    // Chip colors
+    val accent: Color,
+    val accentMuted: Color,
+    val onAccent: Color,
     val chipBg: Color,
-    val chipFg: Color
+    val chipFg: Color,
+    val badgeBg: Color,
+    val badgeFg: Color,
+    val success: Color,
+    val successBg: Color
 )
 
 private val LightRunnableColors = RunnableColors(
     isDark = false,
-    chatBadgeBg = BadgeColors.chatBg,
-    chatBadgeFg = BadgeColors.chatFg,
-    asrBadgeBg = BadgeColors.asrBg,
-    asrBadgeFg = BadgeColors.asrFg,
-    ttsBadgeBg = BadgeColors.ttsBg,
-    ttsBadgeFg = BadgeColors.ttsFg,
-    codecBadgeBg = BadgeColors.codecBg,
-    codecBadgeFg = BadgeColors.codecFg,
-    llamaBadgeBg = BadgeColors.llamaBg,
-    llamaBadgeFg = BadgeColors.llamaFg,
-    onnxBadgeBg = BadgeColors.onnxBg,
-    onnxBadgeFg = BadgeColors.onnxFg,
-    execuTorchBadgeBg = BadgeColors.execuTorchBg,
-    execuTorchBadgeFg = BadgeColors.execuTorchFg,
-    chipBg = Cobalt100,
-    chipFg = Cobalt700
+    accent = Lemon,
+    accentMuted = LemonMuted,
+    onAccent = TextOnLemon,
+    chipBg = LemonMuted,
+    chipFg = Steel,
+    badgeBg = Steel,
+    badgeFg = TextOnSteel,
+    success = SuccessDark,
+    successBg = Color(0xFFDCFCE7)
 )
 
 private val DarkRunnableColors = RunnableColors(
     isDark = true,
-    chatBadgeBg = BadgeColors.chatBgDark,
-    chatBadgeFg = BadgeColors.chatFgDark,
-    asrBadgeBg = BadgeColors.asrBgDark,
-    asrBadgeFg = BadgeColors.asrFgDark,
-    ttsBadgeBg = BadgeColors.ttsBgDark,
-    ttsBadgeFg = BadgeColors.ttsFgDark,
-    codecBadgeBg = BadgeColors.codecBgDark,
-    codecBadgeFg = BadgeColors.codecFgDark,
-    llamaBadgeBg = BadgeColors.llamaBgDark,
-    llamaBadgeFg = BadgeColors.llamaFgDark,
-    onnxBadgeBg = BadgeColors.onnxBgDark,
-    onnxBadgeFg = BadgeColors.onnxFgDark,
-    execuTorchBadgeBg = BadgeColors.execuTorchBgDark,
-    execuTorchBadgeFg = BadgeColors.execuTorchFgDark,
-    chipBg = Cobalt700,
-    chipFg = Cobalt100
+    accent = Lemon,
+    accentMuted = LemonDark,
+    onAccent = TextOnLemon,
+    chipBg = SteelSurface,
+    chipFg = Lemon,
+    badgeBg = Lemon,
+    badgeFg = TextOnLemon,
+    success = Success,
+    successBg = Color(0xFF1A3D2A)
 )
 
 val LocalRunnableColors = staticCompositionLocalOf { LightRunnableColors }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Theme Composable
+// Theme
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun RunnableTheme(
@@ -182,7 +136,6 @@ fun RunnableTheme(
     }
 }
 
-// Extension to access custom colors
 object RunnableTheme {
     val colors: RunnableColors
         @Composable
