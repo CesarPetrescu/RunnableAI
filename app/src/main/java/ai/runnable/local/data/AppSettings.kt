@@ -10,9 +10,9 @@ class AppSettings(context: Context) {
         set(value) {
             val trimmed = value?.trim().orEmpty()
             if (trimmed.isBlank()) {
-                prefs.edit().remove(KEY_HF_TOKEN).apply()
+                prefs.edit().remove(KEY_HF_TOKEN).commit()
             } else {
-                prefs.edit().putString(KEY_HF_TOKEN, trimmed).apply()
+                prefs.edit().putString(KEY_HF_TOKEN, trimmed).commit()
             }
         }
 

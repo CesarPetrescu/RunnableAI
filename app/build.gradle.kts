@@ -101,6 +101,7 @@ dependencies {
     implementation("androidx.compose.animation:animation")
 
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.17.1")
+    implementation("com.github.wendykierp:JTransforms:3.1")
 
     implementation("org.pytorch:executorch-android:1.0.0")
     implementation("com.facebook.soloader:soloader:0.10.5")

@@ -1,6 +1,8 @@
 package ai.runnable.local
 
 import ai.runnable.local.audio.AudioPlayer
+import ai.runnable.local.audio.AudioRecorder
+import ai.runnable.local.audio.RecordingPlayer
 import ai.runnable.local.backends.BackendRegistry
 import ai.runnable.local.backends.executorch.ExecuTorchBackend
 import ai.runnable.local.backends.llama.LlamaBackend
@@ -10,6 +12,7 @@ import ai.runnable.local.data.HuggingFaceRepository
 import ai.runnable.local.data.ModelCatalogRepository
 import ai.runnable.local.data.ModelManager
 import ai.runnable.local.data.ModelStore
+import ai.runnable.local.data.RecordingStore
 import ai.runnable.local.domain.InferenceOrchestrator
 import ai.runnable.local.domain.helpers.AsrHelper
 import ai.runnable.local.domain.helpers.ChatHelper
@@ -45,6 +48,9 @@ class AppContainer(private val app: Application) {
 
     val settings = AppSettings(app)
     val huggingFace = HuggingFaceRepository()
+    val recordingStore = RecordingStore(app)
+    val audioRecorder = AudioRecorder()
+    val recordingPlayer = RecordingPlayer(app)
 
     private val modelStore = ModelStore(app)
     private val catalogRepository = ModelCatalogRepository(app)

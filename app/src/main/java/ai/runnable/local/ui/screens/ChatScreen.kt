@@ -66,6 +66,7 @@ fun ChatScreen(viewModel: MainViewModel) {
     )
 
     val lastAssistant = chat.messages.lastOrNull { it.role == ChatRole.ASSISTANT }?.text.orEmpty()
+    val tokenStream = chat.streamText.ifBlank { lastAssistant }
     val windowInfo = rememberWindowInfo()
 
     if (windowInfo.widthClass == WindowWidthClass.Expanded) {
@@ -107,7 +108,8 @@ fun ChatScreen(viewModel: MainViewModel) {
                 OutputCard(
                     messages = chat.messages,
                     error = chat.error,
-                    tokenStream = lastAssistant,
+                    tokenStream = tokenStream,
+                    perf = chat.perf,
                     maxHistoryHeight = 420.dp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -158,7 +160,8 @@ fun ChatScreen(viewModel: MainViewModel) {
                 OutputCard(
                     messages = chat.messages,
                     error = chat.error,
-                    tokenStream = lastAssistant,
+                    tokenStream = tokenStream,
+                    perf = chat.perf,
                     maxHistoryHeight = 320.dp
                 )
             }
@@ -258,6 +261,7 @@ private fun OutputCard(
     messages: List<ai.runnable.local.domain.ChatMessage>,
     error: String?,
     tokenStream: String,
+    perf: ai.runnable.local.ChatPerf?,
     maxHistoryHeight: androidx.compose.ui.unit.Dp
 ) {
     SectionHeader(
@@ -290,6 +294,19 @@ private fun OutputCard(
                 Spacer(modifier = Modifier.height(6.dp))
                 TokenStreamBar(text = tokenStream)
             }
+            if (perf != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Prompt: ${perf.promptTokens} tok • ${formatMs(perf.promptMs)} • ${formatTps(perf.promptTokensPerSec)} tok/s",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Generate: ${perf.genTokens} tok • ${formatMs(perf.genMs)} • ${formatTps(perf.genTokensPerSec)} tok/s",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (error != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -300,6 +317,16 @@ private fun OutputCard(
             }
         }
     }
+}
+
+private fun formatMs(ms: Long): String {
+    if (ms <= 0L) return "0 ms"
+    return "${ms} ms"
+}
+
+private fun formatTps(tps: Float): String {
+    if (tps.isNaN() || tps.isInfinite() || tps <= 0f) return "0.0"
+    return String.format("%.2f", tps)
 }
 
 @Composable
@@ -318,4 +345,3 @@ private fun QuickPromptChip(text: String, onClick: () -> Unit) {
         )
     }
 }
-

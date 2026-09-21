@@ -91,10 +91,15 @@ class ModelDownloadManager(
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) {
                 val code = response.code
+                val detail = response.body?.string()?.trim().orEmpty()
                 if (code == 401 && isHuggingFaceUrl(artifact.url)) {
-                    throw IllegalStateException("Download failed: 401 (Hugging Face token required or not authorized)")
+                    val suffix = if (detail.isNotBlank()) ": $detail" else ""
+                    throw IllegalStateException(
+                        "Download failed: 401 (Hugging Face token required or not authorized)$suffix"
+                    )
                 }
-                throw IllegalStateException("Download failed: $code")
+                val suffix = if (detail.isNotBlank()) ": $detail" else ""
+                throw IllegalStateException("Download failed: $code$suffix")
             }
 
             val contentLength = response.body?.contentLength() ?: 0L

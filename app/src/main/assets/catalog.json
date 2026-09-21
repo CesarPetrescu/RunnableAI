@@ -2,39 +2,42 @@
   "schema_version": 1,
   "models": [
     {
-      "id": "llm-llama3-8b-q4",
-      "name": "Llama 3 8B Instruct Q4",
+      "id": "llm-gemma-3n-e4b-iq2",
+      "name": "Gemma 3N E4B Instruct IQ2 XXS",
       "task": "CHAT",
       "runtime": "LLAMA_CPP",
       "artifacts": [
         {
           "name": "model.gguf",
-          "url": "https://huggingface.co/TheBloke/Llama-3.1-8B-Instruct-GGUF/resolve/main/llama-3.1-8b-instruct.Q4_K_M.gguf",
+          "url": "https://huggingface.co/unsloth/gemma-3n-E4B-it-GGUF/resolve/main/gemma-3n-E4B-it-UD-IQ2_XXS.gguf",
           "sha256": "",
           "bytes": 0
         }
       ],
       "requirements": {
-        "min_ram_mb": 6000,
+        "min_ram_mb": 4000,
         "preferred_abi": "arm64-v8a"
       },
-      "notes": ["Replace with a smaller 1-4B model for typical phones."]
+      "notes": ["Compact GGUF default for faster on-device chat."]
     },
     {
-      "id": "neutts-nano-q4-backbone",
-      "name": "NeuTTS Nano Q4 Backbone",
+      "id": "neutts-nano-q4-gguf",
+      "name": "NeuTTS Nano Q4 GGUF",
       "task": "TTS",
       "runtime": "LLAMA_CPP",
       "artifacts": [
         {
           "name": "model.gguf",
-          "url": "https://huggingface.co/neuphonic/neutts-nano-q4-gguf/resolve/main/model.gguf",
+          "url": "https://huggingface.co/neuphonic/neutts-nano-q4-gguf/resolve/main/neutts-nano-Q4-0.gguf",
           "sha256": "",
           "bytes": 0
         }
       ],
       "depends_on": ["neucodec-decoder-int8"],
-      "notes": ["Backbone only; requires ONNX codec decoder."]
+      "notes": [
+        "Backbone only; requires ONNX codec decoder.",
+        "Official repo: neuphonic/neutts-nano (Torch) and neuphonic/neutts-nano-q4-gguf (GGUF)."
+      ]
     },
     {
       "id": "neucodec-decoder-int8",
@@ -94,14 +97,20 @@
           "bytes": 0
         },
         {
-          "name": "decoder_joint-model.int8.onnx",
-          "url": "https://huggingface.co/istupakov/canary-1b-v2-onnx/resolve/main/decoder_joint-model.int8.onnx",
+          "name": "decoder-model.int8.onnx",
+          "url": "https://huggingface.co/istupakov/canary-1b-v2-onnx/resolve/main/decoder-model.int8.onnx",
           "sha256": "",
           "bytes": 0
         },
         {
           "name": "vocab.txt",
           "url": "https://huggingface.co/istupakov/canary-1b-v2-onnx/resolve/main/vocab.txt",
+          "sha256": "",
+          "bytes": 0
+        },
+        {
+          "name": "config.json",
+          "url": "https://huggingface.co/istupakov/canary-1b-v2-onnx/resolve/main/config.json",
           "sha256": "",
           "bytes": 0
         }
@@ -134,8 +143,8 @@
       "notes": ["Replace with exported .pte model and tokenizer."]
     },
     {
-      "id": "soprano-1.1-executorch",
-      "name": "Soprano 1.1 80M (ExecuTorch)",
+      "id": "soprano-1.1-80m",
+      "name": "Soprano 1.1 80M",
       "task": "TTS",
       "runtime": "EXECUTORCH",
       "artifacts": [
@@ -152,7 +161,10 @@
           "bytes": 0
         }
       ],
-      "notes": ["Replace with exported .pte model and tokenizer."]
+      "notes": [
+        "Source repo: ekwek/Soprano-1.1-80M (safetensors).",
+        "Export to ExecuTorch (.pte) and tokenizer for on-device use."
+      ]
     }
   ]
 }

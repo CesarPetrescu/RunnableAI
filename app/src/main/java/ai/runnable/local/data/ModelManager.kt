@@ -27,6 +27,7 @@ class ModelManager(
 ) {
     private val workManager by lazy { WorkManager.getInstance(context) }
     private val activeJobs = mutableMapOf<UUID, Job>()
+    private val cancelledModels = mutableSetOf<String>()
 
     private val _catalog = MutableStateFlow<List<ModelRecord>>(emptyList())
     val catalog: StateFlow<List<ModelRecord>> = _catalog.asStateFlow()
@@ -93,6 +94,12 @@ class ModelManager(
         _statuses.update { it + (modelId to ModelStatus.NotDownloaded) }
     }
 
+    fun cancelDownload(modelId: String) {
+        cancelledModels.add(modelId)
+        workManager.cancelUniqueWork(downloadWorkName(modelId))
+        _statuses.update { it + (modelId to ModelStatus.NotDownloaded) }
+    }
+
     fun resolveStatus(model: ModelRecord): ModelStatus {
         val files = store.artifactFiles(model)
         val marker = store.installMarker(model)
@@ -131,9 +138,13 @@ class ModelManager(
                         _statuses.update { it + (model.id to ModelStatus.Ready(files)) }
                     }
                     WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> {
-                        val error = info.outputData.getString(ModelDownloadWorker.KEY_ERROR)
-                            ?: "Download failed"
-                        _statuses.update { it + (model.id to ModelStatus.Failed(error)) }
+                        if (info.state == WorkInfo.State.CANCELLED && cancelledModels.remove(model.id)) {
+                            _statuses.update { it + (model.id to ModelStatus.NotDownloaded) }
+                        } else {
+                            val error = info.outputData.getString(ModelDownloadWorker.KEY_ERROR)
+                                ?: "Download failed"
+                            _statuses.update { it + (model.id to ModelStatus.Failed(error)) }
+                        }
                     }
                     else -> Unit
                 }

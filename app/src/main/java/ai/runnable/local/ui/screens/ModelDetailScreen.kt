@@ -34,6 +34,7 @@ fun ModelDetailScreen(
     files: List<File>,
     dependencyNames: List<String>,
     onDownload: () -> Unit,
+    onCancel: () -> Unit,
     onRemove: () -> Unit,
     onBack: (() -> Unit)? = null
 ) {
@@ -123,11 +124,16 @@ fun ModelDetailScreen(
                     Button(onClick = onDownload) { Text("Download") }
                 }
                 is ModelStatus.Downloading -> {
-                    Text(
-                        text = "Downloading...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Downloading...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        OutlinedButton(onClick = onCancel) {
+                            Text("Cancel")
+                        }
+                    }
                 }
                 is ModelStatus.Ready -> {
                     Button(onClick = onRemove) { Text("Remove") }

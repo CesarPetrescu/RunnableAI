@@ -46,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -100,12 +99,14 @@ fun ModelsScreen(viewModel: MainViewModel) {
                 catalogError = catalogError,
                 onRefresh = { viewModel.refreshCatalog() },
                 onDownload = { viewModel.downloadModel(it) },
+                onCancel = { viewModel.cancelDownload(it) },
                 onRemove = { viewModel.removeModel(it) },
                 hfToken = hfToken,
                 hfSearch = hfSearch,
                 onHfTokenChange = { viewModel.updateHfToken(it) },
                 onHfQueryChange = { viewModel.updateHfQuery(it) },
                 onHfSearch = { viewModel.searchHfGguf() },
+                onHfLoadMore = { viewModel.loadMoreHfGguf() },
                 onHfLoadFiles = { viewModel.loadHfFiles(it) },
                 onHfDownload = { repoId, filename -> viewModel.downloadHfGguf(repoId, filename) },
                 onSelect = {
@@ -125,6 +126,7 @@ fun ModelsScreen(viewModel: MainViewModel) {
                         files = selectedFiles,
                         dependencyNames = dependencyNames,
                         onDownload = { viewModel.downloadModel(selectedModel.id) },
+                        onCancel = { viewModel.cancelDownload(selectedModel.id) },
                         onRemove = { viewModel.removeModel(selectedModel.id) }
                     )
                 } else {
@@ -149,6 +151,7 @@ fun ModelsScreen(viewModel: MainViewModel) {
                         files = selectedFiles,
                         dependencyNames = dependencyNames,
                         onDownload = { viewModel.downloadModel(selectedModel.id) },
+                        onCancel = { viewModel.cancelDownload(selectedModel.id) },
                         onRemove = { viewModel.removeModel(selectedModel.id) },
                         onBack = { showDetail = false }
                     )
@@ -166,12 +169,14 @@ fun ModelsScreen(viewModel: MainViewModel) {
                 catalogError = catalogError,
                 onRefresh = { viewModel.refreshCatalog() },
                 onDownload = { viewModel.downloadModel(it) },
+                onCancel = { viewModel.cancelDownload(it) },
                 onRemove = { viewModel.removeModel(it) },
                 hfToken = hfToken,
                 hfSearch = hfSearch,
                 onHfTokenChange = { viewModel.updateHfToken(it) },
                 onHfQueryChange = { viewModel.updateHfQuery(it) },
                 onHfSearch = { viewModel.searchHfGguf() },
+                onHfLoadMore = { viewModel.loadMoreHfGguf() },
                 onHfLoadFiles = { viewModel.loadHfFiles(it) },
                 onHfDownload = { repoId, filename -> viewModel.downloadHfGguf(repoId, filename) },
                 onSelect = {
@@ -196,12 +201,14 @@ private fun ModelsList(
     catalogError: String?,
     onRefresh: () -> Unit,
     onDownload: (String) -> Unit,
+    onCancel: (String) -> Unit,
     onRemove: (String) -> Unit,
     hfToken: String,
     hfSearch: HfSearchState,
     onHfTokenChange: (String) -> Unit,
     onHfQueryChange: (String) -> Unit,
     onHfSearch: () -> Unit,
+    onHfLoadMore: () -> Unit,
     onHfLoadFiles: (String) -> Unit,
     onHfDownload: (String, String) -> Unit,
     onSelect: (String) -> Unit,
@@ -224,6 +231,20 @@ private fun ModelsList(
             SectionHeader(
                 title = "Library",
                 subtitle = "Track storage and active downloads at a glance."
+            )
+        }
+
+        item {
+            SectionHeader(
+                title = "Access tokens",
+                subtitle = "Saved globally for downloads, search, and gated repos."
+            )
+        }
+
+        item {
+            TokenPanel(
+                token = hfToken,
+                onTokenChange = onHfTokenChange
             )
         }
 
@@ -255,11 +276,10 @@ private fun ModelsList(
 
         item {
             HuggingFacePanel(
-                token = hfToken,
                 search = hfSearch,
-                onTokenChange = onHfTokenChange,
                 onQueryChange = onHfQueryChange,
                 onSearch = onHfSearch,
+                onLoadMore = onHfLoadMore,
                 onLoadFiles = onHfLoadFiles,
                 onDownload = onHfDownload
             )
@@ -278,6 +298,7 @@ private fun ModelsList(
                 model = model,
                 status = status,
                 onDownload = { onDownload(model.id) },
+                onCancel = { onCancel(model.id) },
                 onRemove = { onRemove(model.id) },
                 onSelect = { onSelect(model.id) },
                 isSelected = model.id == selectedId
@@ -295,6 +316,7 @@ private fun ModelCard(
     model: ModelRecord,
     status: ModelStatus,
     onDownload: () -> Unit,
+    onCancel: () -> Unit,
     onRemove: () -> Unit,
     onSelect: () -> Unit,
     isSelected: Boolean
@@ -356,6 +378,10 @@ private fun ModelCard(
                             text = "${(status.progress * 100).toInt()}%",
                             style = MaterialTheme.typography.labelLarge
                         )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedButton(onClick = onCancel) {
+                            Text("Cancel")
+                        }
                     }
                 }
                 is ModelStatus.Ready -> {
@@ -410,14 +436,9 @@ private fun DownloadProgress(progress: Float) {
 }
 
 @Composable
-private fun HuggingFacePanel(
+private fun TokenPanel(
     token: String,
-    search: HfSearchState,
-    onTokenChange: (String) -> Unit,
-    onQueryChange: (String) -> Unit,
-    onSearch: () -> Unit,
-    onLoadFiles: (String) -> Unit,
-    onDownload: (String, String) -> Unit
+    onTokenChange: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -432,11 +453,34 @@ private fun HuggingFacePanel(
             onValueChange = onTokenChange,
             label = { Text("Hugging Face token") },
             placeholder = { Text("hf_...") },
-            visualTransformation = PasswordVisualTransformation(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
+        Text(
+            text = "Used for HF search and downloads, including gated models.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
 
+@Composable
+private fun HuggingFacePanel(
+    search: HfSearchState,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onLoadMore: () -> Unit,
+    onLoadFiles: (String) -> Unit,
+    onDownload: (String, String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.extraLarge)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         OutlinedTextField(
             value = search.query,
             onValueChange = onQueryChange,
@@ -488,6 +532,13 @@ private fun HuggingFacePanel(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            if (result.gated || result.isPrivate) {
+                                Text(
+                                    text = if (result.isPrivate) "Private repo" else "Gated repo (token + accepted license required)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
 
                             when {
                                 result.filesLoading -> Text("Loading GGUF files…")
@@ -507,6 +558,13 @@ private fun HuggingFacePanel(
                                     }
                                 }
                                 else -> {
+                                    if (result.revision.isNotBlank()) {
+                                        Text(
+                                            text = "Revision: ${result.revision.take(10)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                     result.files.forEach { file ->
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -529,6 +587,15 @@ private fun HuggingFacePanel(
                             }
                         }
                     }
+                }
+            }
+            if (search.nextCursor != null) {
+                Spacer(modifier = Modifier.height(6.dp))
+                OutlinedButton(
+                    onClick = onLoadMore,
+                    enabled = !search.isLoadingMore
+                ) {
+                    Text(if (search.isLoadingMore) "Loading..." else "Load more")
                 }
             }
         }

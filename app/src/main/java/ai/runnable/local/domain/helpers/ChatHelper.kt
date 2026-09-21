@@ -29,4 +29,55 @@ class ChatHelper(
             }
         }
     }
+
+    suspend fun runStreaming(
+        modelId: String,
+        prompt: String,
+        onToken: (String) -> Unit,
+        onStats: (ChatPerfStats) -> Unit
+    ): ChatResult {
+        return when (val resolved = resolver.resolveReady(modelId)) {
+            is ResolveResult.Error -> ChatResult.Error(resolved.message)
+            is ResolveResult.Success -> {
+                val model = resolved.model
+                if (model.task != ModelTask.CHAT || model.runtime != RuntimeType.LLAMA_CPP) {
+                    return ChatResult.Error("Model is not a chat-capable llama.cpp model")
+                }
+                val modelPath = resolved.files.first().absolutePath
+                return try {
+                    val params = LlamaParams()
+                    val text = llamaRuntime.generateStream(
+                        modelPath = modelPath,
+                        prompt = prompt,
+                        params = params,
+                        onToken = onToken,
+                        onStats = {
+                            onStats(
+                                ChatPerfStats(
+                                    promptTokens = it.promptTokens,
+                                    promptMs = it.promptMs,
+                                    promptTokensPerSec = it.promptTokensPerSec,
+                                    genTokens = it.genTokens,
+                                    genMs = it.genMs,
+                                    genTokensPerSec = it.genTokensPerSec
+                                )
+                            )
+                        }
+                    )
+                    ChatResult.Success(text)
+                } catch (e: Exception) {
+                    ChatResult.Error(e.message ?: "Chat failed")
+                }
+            }
+        }
+    }
 }
+
+data class ChatPerfStats(
+    val promptTokens: Int,
+    val promptMs: Long,
+    val promptTokensPerSec: Float,
+    val genTokens: Int,
+    val genMs: Long,
+    val genTokensPerSec: Float
+)

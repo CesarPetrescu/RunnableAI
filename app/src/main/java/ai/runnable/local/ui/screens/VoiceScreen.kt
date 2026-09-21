@@ -8,6 +8,10 @@ import ai.runnable.local.ui.components.SectionHeader
 import ai.runnable.local.ui.components.WindowWidthClass
 import ai.runnable.local.ui.components.rememberWindowInfo
 import ai.runnable.local.ui.theme.RunnableTheme
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,7 +40,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
@@ -44,6 +50,7 @@ fun VoiceScreen(viewModel: MainViewModel) {
     val catalog by viewModel.catalog.collectAsStateWithLifecycle()
     val statuses by viewModel.statuses.collectAsStateWithLifecycle()
     val voice by viewModel.voice.collectAsStateWithLifecycle()
+    val recordings by viewModel.recordings.collectAsStateWithLifecycle()
 
     val ttsModels = catalog.filter { it.task == ModelTask.TTS }
     val asrModels = catalog.filter { it.task == ModelTask.ASR }
@@ -52,6 +59,21 @@ fun VoiceScreen(viewModel: MainViewModel) {
     var selectedAsrId by rememberSaveable { mutableStateOf<String?>(null) }
     var ttsText by rememberSaveable { mutableStateOf("Welcome to RunnableAI — your local voice studio.") }
     var activeTab by rememberSaveable { mutableIntStateOf(0) } // 0 = TTS, 1 = STT
+    val context = LocalContext.current
+    var hasMicPermission by rememberSaveable {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED
+        )
+    }
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasMicPermission = granted
+        if (granted) {
+            viewModel.startRecording()
+        }
+    }
 
     LaunchedEffect(ttsModels) {
         if (selectedTtsId == null && ttsModels.isNotEmpty()) {
@@ -118,9 +140,29 @@ fun VoiceScreen(viewModel: MainViewModel) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     SttRecordCard(
-                        isRecording = false,
-                        onStartRecording = { /* TODO: Implement recording */ },
-                        onStopRecording = { /* TODO: Implement recording */ }
+                        isRecording = voice.isRecording,
+                        hasMicPermission = hasMicPermission,
+                        error = voice.recordingError,
+                        onStartRecording = {
+                            if (hasMicPermission) {
+                                viewModel.startRecording()
+                            } else {
+                                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        },
+                        onStopRecording = { viewModel.stopRecording() }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    RecordingsCard(
+                        recordings = recordings,
+                        playingId = voice.playingId,
+                        transcribingId = voice.transcribingId,
+                        canTranscribe = selectedAsrId != null,
+                        onPlay = { viewModel.playRecording(it) },
+                        onTranscribe = {
+                            val modelId = selectedAsrId ?: return@RecordingsCard
+                            viewModel.transcribeRecording(it, modelId)
+                        }
                     )
                 }
             }
@@ -203,16 +245,31 @@ fun VoiceScreen(viewModel: MainViewModel) {
 
                 item {
                     SttRecordCard(
-                        isRecording = false,
-                        onStartRecording = { /* TODO: Implement recording */ },
-                        onStopRecording = { /* TODO: Implement recording */ }
+                        isRecording = voice.isRecording,
+                        hasMicPermission = hasMicPermission,
+                        error = voice.recordingError,
+                        onStartRecording = {
+                            if (hasMicPermission) {
+                                viewModel.startRecording()
+                            } else {
+                                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        },
+                        onStopRecording = { viewModel.stopRecording() }
                     )
                 }
 
                 item {
-                    TranscriptCard(
-                        transcript = "",
-                        error = null
+                    RecordingsCard(
+                        recordings = recordings,
+                        playingId = voice.playingId,
+                        transcribingId = voice.transcribingId,
+                        canTranscribe = selectedAsrId != null,
+                        onPlay = { viewModel.playRecording(it) },
+                        onTranscribe = {
+                            val modelId = selectedAsrId ?: return@RecordingsCard
+                            viewModel.transcribeRecording(it, modelId)
+                        }
                     )
                 }
             }
@@ -370,6 +427,8 @@ private fun TtsPromptCard(
 @Composable
 private fun SttRecordCard(
     isRecording: Boolean,
+    hasMicPermission: Boolean,
+    error: String?,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit
 ) {
@@ -384,10 +443,24 @@ private fun SttRecordCard(
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text(
-                text = if (isRecording) "Recording..." else "Tap the button to start recording audio for transcription.",
+                text = if (isRecording) {
+                    "Recording..."
+                } else if (!hasMicPermission) {
+                    "Microphone permission is required to record audio."
+                } else {
+                    "Tap the button to start recording audio for transcription."
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            if (!error.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (isRecording) {
@@ -398,9 +471,6 @@ private fun SttRecordCard(
                     Button(onClick = onStartRecording) {
                         Text("Start Recording")
                     }
-                }
-                OutlinedButton(onClick = { /* TODO: file picker */ }) {
-                    Text("Upload Audio")
                 }
             }
         }
@@ -461,6 +531,72 @@ private fun TranscriptCard(
 }
 
 @Composable
+private fun RecordingsCard(
+    recordings: List<ai.runnable.local.RecordingUi>,
+    playingId: String?,
+    transcribingId: String?,
+    canTranscribe: Boolean,
+    onPlay: (String) -> Unit,
+    onTranscribe: (String) -> Unit
+) {
+    SectionHeader(
+        title = "Recordings",
+        subtitle = "Saved takes with playback and transcription."
+    )
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = MaterialTheme.shapes.extraLarge
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            if (recordings.isEmpty()) {
+                Text(
+                    text = "No recordings yet. Tap Start Recording to capture audio.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                recordings.forEach { recording ->
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = recording.fileName,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        Text(
+                            text = "Duration: ${formatDuration(recording.durationMs)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (recording.transcript.isNotBlank()) {
+                            Text(
+                                text = "Transcript: ${recording.transcript}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedButton(onClick = { onPlay(recording.id) }) {
+                                Text(if (playingId == recording.id) "Playing..." else "Play")
+                            }
+                            Button(
+                                onClick = { onTranscribe(recording.id) },
+                                enabled = canTranscribe && transcribingId != recording.id
+                            ) {
+                                Text(
+                                    if (!canTranscribe) "Select ASR model"
+                                    else if (transcribingId == recording.id) "Transcribing..."
+                                    else "Transcribe"
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun StyleChip(text: String) {
     val colors = RunnableTheme.colors
     Surface(
@@ -474,4 +610,12 @@ private fun StyleChip(text: String) {
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
         )
     }
+}
+
+private fun formatDuration(durationMs: Long): String {
+    if (durationMs <= 0L) return "0s"
+    val totalSeconds = durationMs / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return if (minutes > 0) "${minutes}m ${seconds}s" else "${seconds}s"
 }

@@ -17,5 +17,28 @@ object LlamaNative {
         temperature: Float
     ): String
 
+    external fun generateStream(
+        modelHandle: Long,
+        prompt: String,
+        nCtx: Int,
+        nPredict: Int,
+        nThreads: Int,
+        temperature: Float,
+        callback: LlamaStreamCallback
+    ): String
+
     external fun systemInfo(): String
+}
+
+interface LlamaStreamCallback {
+    fun onToken(token: String)
+    fun onStats(
+        promptTokens: Int,
+        promptMs: Long,
+        promptTokensPerSec: Float,
+        genTokens: Int,
+        genMs: Long,
+        genTokensPerSec: Float
+    )
+    fun onError(message: String)
 }

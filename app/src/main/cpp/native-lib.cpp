@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include <android/log.h>
 
@@ -138,6 +139,134 @@ Java_ai_runnable_local_backends_llama_LlamaNative_generate(
             break;
         }
     }
+
+    llama_sampler_free(sampler);
+    llama_free(ctx);
+
+    return env->NewStringUTF(output.c_str());
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_ai_runnable_local_backends_llama_LlamaNative_generateStream(
+        JNIEnv * env,
+        jobject /*thiz*/,
+        jlong modelHandle,
+        jstring prompt,
+        jint nCtx,
+        jint nPredict,
+        jint nThreads,
+        jfloat temperature,
+        jobject callback) {
+    auto * model = reinterpret_cast<llama_model *>(modelHandle);
+    if (!model) {
+        return env->NewStringUTF("Model not loaded");
+    }
+
+    if (!callback) {
+        return env->NewStringUTF("Missing callback");
+    }
+
+    jclass cbClass = env->GetObjectClass(callback);
+    jmethodID onToken = env->GetMethodID(cbClass, "onToken", "(Ljava/lang/String;)V");
+    jmethodID onStats = env->GetMethodID(cbClass, "onStats", "(IJFIJF)V");
+    jmethodID onError = env->GetMethodID(cbClass, "onError", "(Ljava/lang/String;)V");
+    if (!onToken || !onStats || !onError) {
+        return env->NewStringUTF("Callback methods not found");
+    }
+
+    const char * prompt_chars = env->GetStringUTFChars(prompt, nullptr);
+    std::string prompt_str = prompt_chars ? prompt_chars : "";
+    if (prompt_chars) {
+        env->ReleaseStringUTFChars(prompt, prompt_chars);
+    }
+
+    const llama_vocab * vocab = llama_model_get_vocab(model);
+    int n_prompt = -llama_tokenize(vocab, prompt_str.c_str(), prompt_str.size(), nullptr, 0, true, true);
+    if (n_prompt <= 0) {
+        jstring msg = env->NewStringUTF("Tokenization failed");
+        env->CallVoidMethod(callback, onError, msg);
+        env->DeleteLocalRef(msg);
+        return env->NewStringUTF("Tokenization failed");
+    }
+    std::vector<llama_token> prompt_tokens(n_prompt);
+    if (llama_tokenize(vocab, prompt_str.c_str(), prompt_str.size(), prompt_tokens.data(), prompt_tokens.size(), true, true) < 0) {
+        jstring msg = env->NewStringUTF("Tokenization failed");
+        env->CallVoidMethod(callback, onError, msg);
+        env->DeleteLocalRef(msg);
+        return env->NewStringUTF("Tokenization failed");
+    }
+
+    llama_context_params ctx_params = llama_context_default_params();
+    ctx_params.n_ctx = nCtx;
+    ctx_params.n_batch = prompt_tokens.size();
+    ctx_params.n_threads = nThreads;
+    ctx_params.n_threads_batch = nThreads;
+
+    llama_context * ctx = llama_init_from_model(model, ctx_params);
+    if (!ctx) {
+        jstring msg = env->NewStringUTF("Context init failed");
+        env->CallVoidMethod(callback, onError, msg);
+        env->DeleteLocalRef(msg);
+        return env->NewStringUTF("Context init failed");
+    }
+
+    auto sparams = llama_sampler_chain_default_params();
+    llama_sampler * sampler = llama_sampler_chain_init(sparams);
+    llama_sampler_chain_add(sampler, llama_sampler_init_top_k(40));
+    llama_sampler_chain_add(sampler, llama_sampler_init_top_p(0.9f, 1));
+    llama_sampler_chain_add(sampler, llama_sampler_init_temp(temperature));
+    llama_sampler_chain_add(sampler, llama_sampler_init_dist(0));
+
+    std::string output = prompt_str;
+
+    auto t_prompt_start = std::chrono::steady_clock::now();
+    llama_batch batch = llama_batch_get_one(prompt_tokens.data(), prompt_tokens.size());
+    if (llama_decode(ctx, batch) != 0) {
+        llama_sampler_free(sampler);
+        llama_free(ctx);
+        jstring msg = env->NewStringUTF("Decode failed");
+        env->CallVoidMethod(callback, onError, msg);
+        env->DeleteLocalRef(msg);
+        return env->NewStringUTF("Decode failed");
+    }
+    auto t_prompt_end = std::chrono::steady_clock::now();
+
+    int generated = 0;
+    auto t_gen_start = std::chrono::steady_clock::now();
+    llama_token token;
+    for (int i = 0; i < nPredict; ++i) {
+        token = llama_sampler_sample(sampler, ctx, -1);
+        if (llama_vocab_is_eog(vocab, token)) {
+            break;
+        }
+        std::string piece = token_to_piece(vocab, token);
+        output += piece;
+        jstring jtoken = env->NewStringUTF(piece.c_str());
+        env->CallVoidMethod(callback, onToken, jtoken);
+        env->DeleteLocalRef(jtoken);
+        ++generated;
+        batch = llama_batch_get_one(&token, 1);
+        if (llama_decode(ctx, batch) != 0) {
+            break;
+        }
+    }
+    auto t_gen_end = std::chrono::steady_clock::now();
+
+    const auto prompt_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_prompt_end - t_prompt_start).count();
+    const auto gen_ms = std::chrono::duration_cast<std::chrono::milliseconds>(t_gen_end - t_gen_start).count();
+    const float prompt_tps = prompt_ms > 0 ? (static_cast<float>(n_prompt) / (prompt_ms / 1000.0f)) : 0.0f;
+    const float gen_tps = gen_ms > 0 ? (static_cast<float>(generated) / (gen_ms / 1000.0f)) : 0.0f;
+
+    env->CallVoidMethod(
+        callback,
+        onStats,
+        static_cast<jint>(n_prompt),
+        static_cast<jlong>(prompt_ms),
+        static_cast<jfloat>(prompt_tps),
+        static_cast<jint>(generated),
+        static_cast<jlong>(gen_ms),
+        static_cast<jfloat>(gen_tps)
+    );
 
     llama_sampler_free(sampler);
     llama_free(ctx);
